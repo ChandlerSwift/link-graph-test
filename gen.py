@@ -20,3 +20,10 @@ for page in pages:
     with open(page+'.html', 'w') as f:
         f.write(page_content)
 
+# generate index page
+page_content = "<!DOCTYPE html><html><head><title>" + page + "</title></head><body>"
+for page in pages:
+    page_content += "<a href=\"/%s.html\">%s</a><br>" % (page, page)
+page_content += "</body></html>"
+with open('index.html', 'w') as f:
+    f.write(page_content)
