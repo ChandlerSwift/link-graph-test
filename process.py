@@ -29,8 +29,9 @@ while len(pages_to_parse) > 0:
         href = link.get('href')
         full_href = urljoin(page_to_parse, href)
         links.append((page_to_parse, full_href))
+        print('[%03d parsed, %05d in queue]: %s => %s' % (len(pages_already_parsed), len(pages_to_parse), page_to_parse, full_href))
         if not (full_href in pages_to_parse or full_href in pages_already_parsed):
             pages_to_parse.append(full_href)
 
-for link in links:
-    print("%s => %s" % link)
+#for link in links:
+#    print("%s => %s" % link)
