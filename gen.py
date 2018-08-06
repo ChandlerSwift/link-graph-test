@@ -15,7 +15,7 @@ for page in pages:
     linked_pages = random.sample(pages, random.randrange(NUM_PAGES))
     page_content = "<!DOCTYPE html><html><head><title>" + page + "</title></head><body>"
     for linked_page in linked_pages:
-        page_content += "<a href=\"/%s.html\">%s</a><br>" % (linked_page, linked_page)
+        page_content += "<a href=\"%s.html\">%s</a><br>" % (linked_page, linked_page)
     page_content += "</body></html>"
     with open(page+'.html', 'w') as f:
         f.write(page_content)
@@ -23,7 +23,7 @@ for page in pages:
 # generate index page
 page_content = "<!DOCTYPE html><html><head><title>" + page + "</title></head><body>"
 for page in pages:
-    page_content += "<a href=\"/%s.html\">%s</a><br>" % (page, page)
+    page_content += "<a href=\"%s.html\">%s</a><br>" % (page, page)
 page_content += "</body></html>"
 with open('index.html', 'w') as f:
     f.write(page_content)
