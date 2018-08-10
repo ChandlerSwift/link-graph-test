@@ -29,6 +29,8 @@ while len(pages_to_parse) > 0:
     print('parsing: ' + page_to_parse)
     try:
         html_page = urlopen(page_to_parse, timeout=.2)
+        # This takes forever and is irrelevent on files, especially .mp4 and .jpg/.png files
+        # We should find a way to filter any irrelevent files out before converting to soup
         soup = BeautifulSoup(html_page, "lxml")
         for link in soup.findAll('a'):
             href = link.get('href')
@@ -40,9 +42,16 @@ while len(pages_to_parse) > 0:
                 if not (full_href in pages_to_parse or full_href in pages_already_parsed):
                     
                     pages_to_parse.append(full_href)
-    # We should figure out why socket.timeout happens because it seems to be random and could skip import pages
-    except (urllib.error.URLError, socket.timeout):
-        print("***** COULD NOT OPEN", page_to_parse, ".***** Moving on to next page.")
+    # Some pages seems to never open and some just fail once or twice.
+    # I think the ones that fail with urllib.error.URLError will always fail but I only have a little evidence for this
+    # We should figure out which pages we can try to open again and which to discard.
+    except (urllib.error.URLError, socket.timeout) as e:
+        if type(e) == socket.timeout:
+            # Put the page back in the front of the queue to try again.
+            pages_to_parse.insert(0,page_to_parse)
+            print("***** socket.timeout: The read operation timed out. Trying again. *****")
+        else:
+            print("***** COULD NOT OPEN", page_to_parse, ".***** Moving on to next page.")
         
 print("Completed page parsing in", time.time() - start_time, " seconds.")
 floyd_warshall_start_time = time.time()
@@ -120,7 +129,7 @@ for k in range(num_pages):
 #print("Next_node:",next_node)
 minimum, indices = find_min_and_index(dist)
 longest_path = path(indices[0],indices[1])
-print("Longest path:",[pages_already_parsed[page_index] for page_index in longest_path])
+print("Longest path is", minimum, "steps:",[pages_already_parsed[page_index] for page_index in longest_path])
 #print("Dist:",dist)
 print("Completed floyd-warshall in",time.time() - floyd_warshall_start_time, "seconds.")
 print("Total time:", time.time() - start_time)
