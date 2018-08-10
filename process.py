@@ -7,10 +7,15 @@ except:
 
 from urllib.request import urlopen
 from urllib.parse import urljoin
+import urllib, socket, time
+
+start_time = time.time()
 
 # GENERATE LINK MAP
 
-START_URL="index.html"
+START_URL="https://chandlerswift.com/"
+SITE_RESTRICTION = "chandlerswift.com"
+
 
 # Links are represented by tuples: (src, dst)
 links = []
@@ -21,17 +26,27 @@ pages_already_parsed = []
 while len(pages_to_parse) > 0:
     page_to_parse = pages_to_parse.pop(0)
     pages_already_parsed.append(page_to_parse)
-    #print('parsing: ' + page_to_parse)
-    with open(page_to_parse, 'r') as html_page:
+    print('parsing: ' + page_to_parse)
+    try:
+        html_page = urlopen(page_to_parse, timeout=.2)
         soup = BeautifulSoup(html_page, "lxml")
         for link in soup.findAll('a'):
             href = link.get('href')
             full_href = urljoin(page_to_parse, href)
-            links.append((page_to_parse, full_href))
-            print('[%03d parsed, %05d in queue]: %s => %s' % (len(pages_already_parsed), len(pages_to_parse), page_to_parse, full_href))
-            if not (full_href in pages_to_parse or full_href in pages_already_parsed):
-                pages_to_parse.append(full_href)
-
+            # Ensure we don't have any links outside the site we're digging through
+            if SITE_RESTRICTION in full_href and SITE_RESTRICTION in page_to_parse:
+                print('[%03d parsed, %05d in queue]: %s => %s' % (len(pages_already_parsed), len(pages_to_parse), page_to_parse, full_href))
+                links.append((page_to_parse, full_href))
+                if not (full_href in pages_to_parse or full_href in pages_already_parsed):
+                    
+                    pages_to_parse.append(full_href)
+    # We should figure out why socket.timeout happens because it seems to be random and could skip import pages
+    except (urllib.error.URLError, socket.timeout):
+        print("***** COULD NOT OPEN", page_to_parse, ".***** Moving on to next page.")
+        
+print("Completed page parsing in", time.time() - start_time, " seconds.")
+floyd_warshall_start_time = time.time()
+print("Completed page parsing. Now running Floyd-Warshall")
 #for link in links:
 #    print("%s => %s" % link)
 
@@ -58,6 +73,18 @@ def path(start_, end_):
         path.append(start)
 
     return path
+
+def find_min_and_index(nested_list):
+    minimum = float("infinity")
+    index = (None, None)
+    for i, single_list in enumerate(nested_list):
+        for j, value in enumerate(single_list):
+            if value < minimum:
+                minimum = value
+                index = (i,j)
+    
+    return (minimum, index)
+
 
 for link in links:
     u = pages_already_parsed.index(link[0])
@@ -89,9 +116,14 @@ for k in range(num_pages):
 
 
 
-print("Pages:",pages_already_parsed)
-print("Next_node:",next_node)
-print("Dist:",dist)
+#print("Pages:",pages_already_parsed)
+#print("Next_node:",next_node)
+minimum, indices = find_min_and_index(dist)
+longest_path = path(indices[0],indices[1])
+print("Longest path:",[pages_already_parsed[page_index] for page_index in longest_path])
+#print("Dist:",dist)
+print("Completed floyd-warshall in",time.time() - floyd_warshall_start_time, "seconds.")
+print("Total time:", time.time() - start_time)
 
 
 
